@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from scipy.spatial.transform import Rotation
 
 class SE3Control(object):
@@ -30,12 +31,43 @@ class SE3Control(object):
         self.rotor_speed_max = quad_params['rotor_speed_max'] # rad/s
         self.k_thrust        = quad_params['k_thrust'] # N/(rad/s)**2
         self.k_drag          = quad_params['k_drag']   # Nm/(rad/s)**2
+        self.y               = self.k_drag/self.k_thrust
 
         # You may define any additional constants you like including control gains.
         self.inertia = np.diag(np.array([self.Ixx, self.Iyy, self.Izz])) # kg*m^2
         self.g = 9.81 # m/s^2
 
         # STUDENT CODE HERE
+        self.kd1 = 5000
+        self.kp1 = 5000
+        self.kd2 = 5000
+        self.kp2 = 5000
+        self.kd3 = 5000
+        self.kp3 = 5000
+        self.kp_roll = 5000
+        self.kp_pitch = 5000
+        self.kp_yaw = 5000
+        self.kd_yaw = 5000
+
+    def euler_from_quaternion(self, quat):
+        x = quat[0]
+        y = quat[1]
+        z = quat[2]
+        w = quat[3]
+
+        t0 = 2.0 * (w*x+y*z)
+        t1 = 1.0 - 2.0 * (x*x + y*y)
+        roll_x = math.atan2(t0,t1)
+
+        t2 = 2.0 * (w*y - z*x)
+        t2 = 1.0 if t2 > 1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch_y = math.asin(t2)
+
+        t3 = 2.0 * (w*z + x*y)
+        t4 = 1.0 - 2.0*(y*y + z*z)
+        yaw_z = math.atan2(t3, t4)
+        return roll_x, pitch_y, yaw_z
 
     def update(self, t, state, flat_output):
         """
@@ -71,6 +103,41 @@ class SE3Control(object):
         cmd_q = np.zeros((4,))
 
         # STUDENT CODE HERE
+
+        # compute commanded acceleration
+        accel_comm = [flat_output.get('x_ddot')[0] - self.kd1*(state.get('v')[0]-flat_output.get('x_dot')[0]) - self.kp1*(state.get('x')[0]-flat_output.get('x')[0]),
+                      flat_output.get('x_ddot')[1] - self.kd2*(state.get('v')[1]-flat_output.get('x_dot')[1]) - self.kp2*(state.get('x')[1]-flat_output.get('x')[1]),
+                      flat_output.get('x_ddot')[2] - self.kd3*(state.get('v')[2]-flat_output.get('x_dot')[2]) - self.kp3*(state.get('x')[2]-flat_output.get('x')[2])]
+
+        # compute desired thrust control
+        u1 = self.mass*(accel_comm[2]+self.g)
+
+        # compute desired roll and pitch
+        b = (np.array([accel_comm[0], accel_comm[1]]).T)/self.g
+        A = np.array([[np.cos(flat_output.get('yaw')), np.sin(flat_output.get('yaw'))],
+                      [np.sin(flat_output.get('yaw')), -np.cos(flat_output.get('yaw'))]])
+        x = np.dot(np.linalg.inv(A),b)
+        roll_des = x[0]
+        pitch_des = x[1]
+
+        roll, pitch, yaw = self.euler_from_quaternion(state.get('q'))
+
+        # compute attitude control
+        u2 = np.array([self.Ixx*-self.kp_roll*(roll-roll_des),
+                      self.Iyy*-self.kp_pitch*(pitch-pitch_des),
+                      self.Izz*-self.kp_yaw*(yaw-flat_output.get('yaw'))])
+
+        # combine u1 and u2 into u_tot
+        u_tot = np.array([u1, u2[0], u2[1], u2[2]]).T
+
+        # solve for cmd_motor_speeds
+        A = np.array([[1,1,1,1],
+                      [0,self.arm_length, 0, -self.arm_length],
+                      [-self.arm_length, 0, self.arm_length, 0],
+                      [self.y, -self.y, self.y, -self.y]])
+
+        cmd_motor_speeds = np.dot(np.linalg.inv(A), u_tot)
+        print(cmd_motor_speeds)
 
         control_input = {'cmd_motor_speeds':cmd_motor_speeds,
                          'cmd_thrust':cmd_thrust,

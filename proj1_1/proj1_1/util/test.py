@@ -30,7 +30,7 @@ def test_mission(waypoint_traj_cls, se3_control_cls, points, initial_state):
 
     # Simulation options.
     quadrotor = Quadrotor(quad_params)
-    t_final = 60
+    t_final = 5
 
     # Run simulation.
     (time, state, control, flat, exit) = simulate(
