@@ -27,11 +27,10 @@ my_traj = hover_traj.HoverTraj()
 
 # You will complete the implementation of the WaypointTraj object. It should
 # work for any list of 3D coordinates, such as this example:
-points = np.array([
-    [0, 0, 0],
-    [0, 1, 1]
-    ])
-my_traj = waypoint_traj.WaypointTraj(points)
+# points = np.array([
+#     [1, 0, 0]
+#     ])
+# my_traj = waypoint_traj.WaypointTraj(points)
 
 # Set simulation parameters.
 #
@@ -39,12 +38,12 @@ my_traj = waypoint_traj.WaypointTraj(points)
 # step response of your controller to an initial disturbance in position or
 # orientation.
 
-w = 2
+w = 3
 world = World.empty((-w, w, -w, w, -w, w))
-t_final = 2
-initial_state = {'x': np.array([0.5, 0, 0]),
+t_final = 10
+initial_state = {'x': np.array([0, 0, 0]),
                  'v': np.zeros(3,),
-                 'q': np.array([0, 0, 0, 1]), # [i,j,k,w]
+                 'q': Rotation.from_euler('y',45,degrees=True).as_quat(), # [i,j,k,w]
                  'w': np.zeros(3,)}
 
 # Perform simulation.
@@ -105,6 +104,24 @@ ax.legend(('x', 'y', 'z'))
 ax.set_ylabel('angular velocity, rad/s')
 ax.set_xlabel('time, s')
 ax.grid('major')
+
+(fig, axes) = plt.subplots(nrows=2,ncols=1, sharex=True, num='Roll and Pitch vs Time')
+roll_des = control['roll_des']
+roll = control['roll']
+pitch_des = control['pitch_des']
+pitch = control['pitch']
+ax = axes[0]
+ax.plot(time, roll_des[:],'r.', time, roll[:], 'g.')
+ax.legend('roll_des','roll')
+ax.set_ylabel('roll')
+ax.grid('major')
+ax.set_title('Roll vs Roll Desired')
+ax = axes[1]
+ax.plot(time, pitch_des[:],'r.', time, pitch[:],'g.')
+ax.legend('pitch_des', 'pitch')
+ax.set_ylabel('pitch')
+ax.grid('major')
+ax.set_title('Pitch vs Pitch Desired')
 
 # Commands vs. Time
 (fig, axes) = plt.subplots(nrows=3, ncols=1, sharex=True, num='Commands vs Time')
