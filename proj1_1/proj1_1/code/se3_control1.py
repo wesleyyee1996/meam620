@@ -38,17 +38,11 @@ class SE3Control(object):
         self.g = 9.81 # m/s^2
 
         # STUDENT CODE HERE
-        self.I = np.array([[self.Ixx, 0, 0],
-                          [0, self.Iyy, 0],
-                          [0, 0, self.Izz]])
+        self.kp = [5, 5, 5]
+        self.kd = [5, 5, 5]
 
-        self.kp = [20, 20, 20]
-        self.kd = [self.kp[1]/1.25, self.kp[1]/1.25, self.kp[1]/1.25]
-        self.kr = [8100, 8100, 1000]
-        self.kw = [510, 510, 100]
-        # self.kr = [8100, 8100, 1000]
-        # self.kw = [510, 510, 100]
-
+        self.kp_att = [2000, 2000, 2000]
+        self.kd_att = [20, 20, 20]
 
 
     def update(self, t, state, flat_output):
@@ -86,65 +80,8 @@ class SE3Control(object):
 
         # STUDENT CODE HERE
 
-        # calculate desired acceleration
-        des_acc = np.array([flat_output.get('x_ddot')[0]-self.kd[0]*(state.get('v')[0]-flat_output.get('x_dot')[0])-self.kp[0]*(state.get('x')[0]-flat_output.get('x')[0]),
-            flat_output.get('x_ddot')[1]-self.kd[1]*(state.get('v')[1]-flat_output.get('x_dot')[1]) - self.kp[1]*(state.get('x')[1]-flat_output.get('x')[1]),
-            flat_output.get('x_ddot')[2] - self.kd[2] * (state.get('v')[2]-flat_output.get('x_dot')[2]) - self.kp[2] * (state.get('x')[2]-flat_output.get('x')[2])])
+        # compute commanded acceleration
 
-        # calculate F_des
-        F_des = des_acc*self.mass + np.array([0,0,self.mass*self.g])
-
-        # calculate b3
-        R = Rotation.from_quat(state.get('q')).as_matrix()
-        b3 = R @ np.array([0,0,1])
-
-        # calculate u1
-        u1 = b3.T @ F_des
-
-        # calculate R_des
-        b3_des = F_des/np.linalg.norm(F_des)
-        a_psi = np.array([np.cos(flat_output.get('yaw')),
-                          np.sin(flat_output.get('yaw')),
-                          0])
-        b3_desXa_psi = np.cross(b3_des, a_psi)
-        b2_des = (b3_desXa_psi)/np.linalg.norm(b3_desXa_psi)
-        b2_desXb3_des = np.cross(b2_des, b3_des)
-        R_des = np.array([[b2_desXb3_des[0],b2_des[0],b3_des[0]],
-                          [b2_desXb3_des[1],b2_des[1],b3_des[1]],
-                          [b2_desXb3_des[2],b2_des[2],b3_des[2]]])
-
-        # calcualte e_R
-        e_R = 0.5 * ((R_des.T @ R) - (R.T @ R_des))
-        e_R = np.array([-e_R[1][2],
-                        e_R[0][2],
-                        -e_R[0][1]])
-
-        # calculate u2
-        w = np.array([state.get('w')[0], state.get('w')[1], state.get('w')[2]])
-        u2 = self.I @ ((-np.diag(self.kr) @ e_R) - np.diag(self.kw) @ w)
-
-        utot = np.array([u1, u2[0], u2[1], u2[2]])
-
-        A = np.array([[1,1,1,1],
-                      [0, self.arm_length, 0, -self.arm_length],
-                      [-self.arm_length, 0, self.arm_length, 0],
-                      [self.y, -self.y, self.y, -self.y]])
-
-        F = np.linalg.inv(A) @ utot
-
-        for i in range(len(F)):
-            if F[i] < 0:
-                F[i] = 0
-                cmd_motor_speeds[i] = self.rotor_speed_max
-            cmd_motor_speeds[i] = math.sqrt(F[i]/self.k_thrust)
-            if cmd_motor_speeds[i] >= self.rotor_speed_max:
-                cmd_motor_speeds[i] = self.rotor_speed_max
-
-
-        #cmd_motor_speeds = np.where(cmd_motor_speeds > self.rotor_speed_max, rotor_speed_max, cmd_motor_speeds)
-
-        cmd_thrust = u1
-        cmd_moment = u2
 
         control_input = {'cmd_motor_speeds':cmd_motor_speeds,
                          'cmd_thrust':cmd_thrust,

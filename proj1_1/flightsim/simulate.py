@@ -178,7 +178,7 @@ def safety_exit(state, flat, control):
         return ExitStatus.OVER_SPEED
     if np.any(np.abs(state['w']) > 100):
         return ExitStatus.OVER_SPIN
-    if np.any(np.abs(state['x'] - flat['x']) > 100):
+    if np.any(np.abs(state['x'] - flat['x']) > 20):
         return ExitStatus.FLY_AWAY
     return None
 

@@ -27,10 +27,15 @@ my_traj = hover_traj.HoverTraj()
 
 # You will complete the implementation of the WaypointTraj object. It should
 # work for any list of 3D coordinates, such as this example:
-# points = np.array([
-#     [1, 0, 0]
-#     ])
-# my_traj = waypoint_traj.WaypointTraj(points)
+points = np.array([
+    [0.0, 0.0, 0.0],
+    [2.0, 0.0, 0.0],
+    [2.0, 2.0, 0.0],
+    [2.0, 2.0, 2.0],
+    [0.0, 2.0, 2.0],
+    [0.0, 0.0, 2.0]
+    ])
+my_traj = waypoint_traj.WaypointTraj(points)
 
 # Set simulation parameters.
 #
@@ -38,13 +43,19 @@ my_traj = hover_traj.HoverTraj()
 # step response of your controller to an initial disturbance in position or
 # orientation.
 
-w = 3
+w = 2
 world = World.empty((-w, w, -w, w, -w, w))
-t_final = 10
+t_final = 20
 initial_state = {'x': np.array([0, 0, 0]),
                  'v': np.zeros(3,),
-                 'q': Rotation.from_euler('y',45,degrees=True).as_quat(), # [i,j,k,w]
+                 'q': Rotation.from_euler('x',0,degrees=True).as_quat(), # [i,j,k,w]
                  'w': np.zeros(3,)}
+# initial_state = {
+#         "x": [ 0,  0.0,  0.0],
+#         "v": [ 0.0,  0.0,  0.0],
+#         "q": [ 0.0,  0.0,  0,1],
+#         "w": [ 0.0,  0.0,  0.0]
+# }
 
 # Perform simulation.
 #
@@ -105,23 +116,7 @@ ax.set_ylabel('angular velocity, rad/s')
 ax.set_xlabel('time, s')
 ax.grid('major')
 
-(fig, axes) = plt.subplots(nrows=2,ncols=1, sharex=True, num='Roll and Pitch vs Time')
-roll_des = control['roll_des']
-roll = control['roll']
-pitch_des = control['pitch_des']
-pitch = control['pitch']
-ax = axes[0]
-ax.plot(time, roll_des[:],'r.', time, roll[:], 'g.')
-ax.legend('roll_des','roll')
-ax.set_ylabel('roll')
-ax.grid('major')
-ax.set_title('Roll vs Roll Desired')
-ax = axes[1]
-ax.plot(time, pitch_des[:],'r.', time, pitch[:],'g.')
-ax.legend('pitch_des', 'pitch')
-ax.set_ylabel('pitch')
-ax.grid('major')
-ax.set_title('Pitch vs Pitch Desired')
+
 
 # Commands vs. Time
 (fig, axes) = plt.subplots(nrows=3, ncols=1, sharex=True, num='Commands vs Time')
@@ -145,6 +140,27 @@ ax.set_ylabel('thrust, N')
 ax.set_xlabel('time, s')
 ax.grid('major')
 
+# (fig, axes) = plt.subplots(nrows=2,ncols=1, sharex=True, num='Roll and Pitch vs Time')
+# roll_des = control['roll_des']
+# roll = control['roll']
+# pitch_des = control['pitch_des']
+# pitch = control['pitch']
+# pitch_error = control['pitch_error']
+# ax = axes[0]
+# ax.plot(time, roll_des[:],'r.', time, roll[:], 'g.')
+# ax.set_ylabel('roll (rad)')
+# ax.set_xlabel('time (s)')
+# ax.grid('major')
+# ax.set_title('Roll vs Roll Desired')
+# ax = axes[1]
+# ax.plot(time, pitch_des[:],'r.', time, pitch[:],'g.', time, pitch_error[:])
+# ax.set_ylabel('pitch (rad)')
+# ax.set_xlabel('time (s)')
+# ax.grid('major')
+# ax.set_title('Pitch vs Pitch Desired')
+
+
+
 # 3D Paths
 fig = plt.figure('3D Path')
 ax = Axes3Ds(fig)
@@ -156,6 +172,14 @@ ax.plot3D(flat['x'][:,0], flat['x'][:,1], flat['x'][:,2], 'k')
 # Instead of viewing the animation live, you may provide a .mp4 filename to save.
 R = Rotation.from_quat(state['q']).as_matrix()
 
+# (fig, axes) = plt.subplots(nrows=2,ncols=1, sharex=True)
+# pos_error = control['pos_error']
+# ax = axes[0]
+# ax.plot(time, pos_error[:,0],'r.', time, pos_error[:,1], 'g.')
+# ax.set_ylabel('Pos/Vel Error (rad)')
+# ax.set_xlabel('time (s)')
+# ax.grid('major')
+# ax.set_title('Pos and Vel error')
 
 ani = animate(time, state['x'], R, world=world, filename=None)
 
