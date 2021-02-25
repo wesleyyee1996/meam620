@@ -13,7 +13,7 @@ from proj1_2.code.graph_search import graph_search
 
 # Choose a test example file. You should write your own example files too!
 # filename = 'test_empty.json'
-filename = 'test_impossible.json'
+filename = 'test_window.json'
 
 # Load the test example.
 file = Path(inspect.getsourcefile(lambda:0)).parent.resolve() / '..' / 'util' / filename
@@ -25,7 +25,7 @@ goal   = world.world['goal']           # Goal point, shape=(3,)
 
 # Run your code and return the path.
 start_time = time.time()
-path, node_expanded = graph_search(world, resolution, margin, start, goal, astar=False)
+path, node_expanded = graph_search(world, resolution, margin, start, goal, astar=True)
 end_time = time.time()
 
 # Print results.
