@@ -8,12 +8,12 @@ import time
 from flightsim.axes3ds import Axes3Ds
 from flightsim.world import World
 
-from proj1_2.code.occupancy_map import OccupancyMap
-from proj1_2.code.graph_search import graph_search
+from .occupancy_map import OccupancyMap
+from .graph_search import graph_search
 
 # Choose a test example file. You should write your own example files too!
 # filename = 'test_empty.json'
-filename = 'test_custom.json'
+filename = 'test_forest.json'
 
 # Load the test example.
 file = Path(inspect.getsourcefile(lambda:0)).parent.resolve() / '..' / 'util' / filename

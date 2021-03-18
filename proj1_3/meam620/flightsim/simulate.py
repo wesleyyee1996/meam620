@@ -153,6 +153,7 @@ def traj_end_exit(initial_state, trajectory):
         err_attitude = rotf * cur_attitude.inv() # Rotation between current and final
         angle = norm(err_attitude.as_rotvec()) # angle in radians from vertical
         # Success is reaching near-zero speed with near-zero position error.
+        # print(norm(state['x'] - xf),state['x'], xf)
         if time >= min_time and norm(state['x'] - xf) < 0.02 and norm(state['v']) <= 0.03 and angle <= 0.02:
             return ExitStatus.COMPLETE
         return None

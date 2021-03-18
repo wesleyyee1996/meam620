@@ -17,6 +17,7 @@ from flightsim.world import World
 from proj1_3.code.occupancy_map import OccupancyMap
 from proj1_3.code.se3_control import SE3Control
 from proj1_3.code.world_traj import WorldTraj
+from proj1_3.code.waypoint_traj import WaypointTraj
 
 # Improve figure display on high DPI screens.
 # mpl.rcParams['figure.dpi'] = 200
@@ -60,7 +61,7 @@ planning_end_time = time.time()
 # plt.show()
 
 # Set simulation parameters.
-t_final = 60
+t_final = 20
 initial_state = {'x': start,
                  'v': (0, 0, 0),
                  'q': (0, 0, 0, 1), # [i,j,k,w]
